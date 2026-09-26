@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mouse Sound FX</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Определения узоров фона (соты/волны/ромб) — переиспользуются как
+     fill="url(#pat-...)" у прямоугольников-подложек. Цвет задаётся через
+     currentColor, то есть через CSS-свойство color на самом <svg>. -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <defs>
+    <pattern id="pat-honeycomb" patternUnits="userSpaceOnUse" width="54" height="31.177">
+      <polygon points="36,15.588 27,31.177 9,31.177 0,15.588 9,0 27,0" fill="none" stroke="currentColor" stroke-width="1"/>
+      <polygon points="63,31.177 54,46.765 36,46.765 27,31.177 36,15.588 54,15.588" fill="none" stroke="currentColor" stroke-width="1"/>
+    </pattern>
+    <pattern id="pat-diamond" patternUnits="userSpaceOnUse" width="32" height="32">
+      <path d="M0 0 L32 32 M32 0 L0 32" stroke="currentColor" stroke-width="1" fill="none"/>
+    </pattern>
+    <pattern id="pat-waves" patternUnits="userSpaceOnUse" width="28" height="26">
+      <path d="M0,13 C3.5,9 10.5,9 14,13 C17.5,17 24.5,17 28,13" stroke="currentColor" stroke-width="1" fill="none"/>
+    </pattern>
+    <pattern id="pat-dots" patternUnits="userSpaceOnUse" width="22" height="22">
+      <circle cx="11" cy="11" r="1.6" fill="currentColor"/>
+    </pattern>
+    <pattern id="pat-grid" patternUnits="userSpaceOnUse" width="28" height="28">
+      <path d="M0 0 H28 M0 0 V28" stroke="currentColor" stroke-width="1" fill="none"/>
+    </pattern>
+    <pattern id="pat-stripes" patternUnits="userSpaceOnUse" width="14" height="14" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="14" stroke="currentColor" stroke-width="2"/>
+    </pattern>
+  </defs>
+</svg>
+
+<div class="app" id="app">
+
+  <header class="header">
+    <div class="logo pywebview-drag-region">
+      <div class="logo-row">
+        <span class="logo-dot" id="logoDot"></span>
+        <span class="logo-text">MS<span class="logo-fx" id="logoFx">FX</span></span>
+      </div>
+      <div class="logo-caption">Mouse Sound FX <span class="logo-version">v1.1</span></div>
+    </div>
+
+    <div class="header-right">
+      <div class="toolbar">
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="Тема оформления" title="Тема">
+          <svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+            <path d="M16 4 A12 12 0 0 1 28 16 L16 16 Z" fill="#3b82f6"/>
+            <path d="M28 16 A12 12 0 0 1 16 28 L16 16 Z" fill="#10b981"/>
+            <path d="M16 28 A12 12 0 0 1 4 16 L16 16 Z" fill="#f97316"/>
+            <path d="M4 16 A12 12 0 0 1 16 4 L16 16 Z" fill="#a855f7"/>
+            <circle cx="16" cy="16" r="5" class="icon-punch"/>
+          </svg>
+        </button>
+
+        <span class="toolbar-sep"></span>
+
+        <button class="icon-btn" id="volumeBtn" type="button" aria-label="Громкость" title="Громкость">
+          <svg viewBox="0 0 32 32" width="24" height="24" aria-hidden="true">
+            <path d="M9 13 L9 19 L12 19 L17 23 L17 9 L12 13 Z" fill="white"/>
+            <g id="volumeWaves" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"></g>
+          </svg>
+        </button>
+      </div>
+
+      <div class="window-controls">
+        <button class="win-btn" id="minimizeBtn" type="button" aria-label="Свернуть" title="Свернуть">
+          <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><rect x="1" y="5.5" width="10" height="1.2" fill="currentColor"/></svg>
+        </button>
+        <button class="win-btn win-btn--close" id="closeBtn" type="button" aria-label="Закрыть" title="Закрыть">
+          <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M1 1 L11 11 M11 1 L1 11" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="body-row">
+
+    <section class="stage" id="stage">
+      <svg class="pattern-layer" id="stagePatternLayer" aria-hidden="true"></svg>
+
+      <button class="power-btn" id="powerBtn" type="button" aria-label="Включить или выключить озвучивание">
+        <span class="power-inner" id="powerInner">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3v9"></path>
+            <path d="M18.36 7.64a9 9 0 1 1-12.73 0"></path>
+          </svg>
+        </span>
+      </button>
+
+      <div class="mouse-wrap">
+        <div class="mouse" id="mouseBody">
+          <button class="mouse-part mouse-part--left" id="partLeft" type="button" data-btn="left">ЛКМ</button>
+          <button class="mouse-part mouse-part--right" id="partRight" type="button" data-btn="right">ПКМ</button>
+          <button class="mouse-part mouse-part--wheel" id="partMiddle" type="button" data-btn="middle" aria-label="Колесо"></button>
+        </div>
+      </div>
+
+      <p class="hint">Нажми на кнопку мыши, чтобы её настроить</p>
+
+      <div class="stage-divider" id="stageDivider"></div>
+
+      <label class="switch-row">
+        <span>Звук при отпускании</span>
+        <span class="switch">
+          <input type="checkbox" id="releaseToggle">
+          <span class="switch-track"></span>
+        </span>
+      </label>
+    </section>
+
+    <div class="v-divider" id="vDivider"></div>
+
+    <section class="panel" id="panel">
+      <svg class="pattern-layer" id="panelPatternLayer" aria-hidden="true"></svg>
+
+      <div class="panel-inner">
+        <div class="tabs" id="tabs" role="tablist">
+          <button class="tab" type="button" data-btn="left" role="tab">ЛКМ</button>
+          <button class="tab" type="button" data-btn="right" role="tab">ПКМ</button>
+          <button class="tab" type="button" data-btn="middle" role="tab">Колесо</button>
+        </div>
+
+        <p class="panel-title" id="panelTitle">Настройки для: Левая кнопка</p>
+
+        <label class="switch-row">
+          <span>Озвучивать кнопку</span>
+          <span class="switch">
+            <input type="checkbox" id="enableToggle">
+            <span class="switch-track"></span>
+          </span>
+        </label>
+
+        <div class="panel-divider"></div>
+
+        <p class="section-label">Звук</p>
+        <div class="sound-row">
+          <div class="dropdown" id="soundDropdown">
+            <button class="dropdown-btn" id="soundDropdownBtn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span id="soundLabel">Мягкий</span>
+              <svg viewBox="0 0 10 6" width="10" height="6" aria-hidden="true"><path d="M0 0 L5 6 L10 0 Z" fill="currentColor"/></svg>
+            </button>
+            <div class="dropdown-list" id="soundDropdownList" role="listbox"></div>
+          </div>
+          <button class="play-btn" id="playBtn" type="button" title="Прослушать" aria-label="Прослушать выбранный звук">▶</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="status-bar" id="statusBar"></div>
+</div>
+
+<!-- ===================== Всплывающие панели ===================== -->
+
+<div class="popover" id="volumePopover" role="dialog" aria-label="Громкость">
+  <p class="popover-label">Громкость</p>
+  <p class="popover-value" id="volumeValue">80%</p>
+  <input type="range" id="volumeSlider" class="slider" min="0" max="100" value="80" aria-label="Уровень громкости">
+</div>
+
+<div class="popover popover-theme" id="themePopover" role="dialog" aria-label="Тема оформления">
+  <p class="popover-label">Тема</p>
+
+  <div class="segmented" id="targetSegmented">
+    <button type="button" class="segmented-btn is-active" data-target="accent">Акцент</button>
+    <button type="button" class="segmented-btn" data-target="background">Фон</button>
+  </div>
+
+  <p class="mini-label">Пресеты</p>
+  <div class="preset-grid" id="presetGrid"></div>
+
+  <div id="patternSection">
+    <p class="mini-label">Узор фона</p>
+    <div class="pattern-grid" id="patternGrid"></div>
+  </div>
+
+  <div class="custom-color-card">
+    <p class="mini-label">Свой цвет</p>
+
+    <div class="hue-strip" id="hueStrip">
+      <div class="hue-marker" id="hueMarker"></div>
+    </div>
+
+    <div class="sv-square" id="svSquare">
+      <div class="sv-safe-zone" id="svSafeZone"></div>
+      <div class="sv-marker" id="svMarker"></div>
+    </div>
+
+    <div class="hex-row">
+      <span class="hex-swatch" id="hexSwatch"></span>
+      <input type="text" id="hexInput" class="hex-input" maxlength="7" spellcheck="false" aria-label="Hex-код цвета">
+      <button type="button" class="btn-ok" id="hexOkBtn">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== Модалки добавления звука ===================== -->
+
+<div class="modal-overlay" id="nameModalOverlay">
+  <div class="modal" role="dialog" aria-label="Название звука">
+    <h3>Название для этого звука</h3>
+    <input type="text" id="nameInput" class="modal-input" maxlength="40" placeholder="Например, «Щелчок»">
+    <p class="modal-error" id="nameError"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" id="nameCancelBtn">Отмена</button>
+      <button type="button" class="btn-solid" id="nameSaveBtn">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmModalOverlay">
+  <div class="modal" role="dialog" aria-label="Подтверждение замены">
+    <h3>Заменить звук?</h3>
+    <p class="modal-text" id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-ghost" id="confirmCancelBtn">Отмена</button>
+      <button type="button" class="btn-solid" id="confirmOkBtn">Заменить</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

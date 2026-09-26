@@ -1,0 +1,26 @@
+{
+  "master": true,
+  "volume": 0.8,
+  "accent": "#5b6fce",
+  "background": "#151517",
+  "bg_pattern": "none",
+  "release_sound": false,
+  "assignments": {
+    "left": {
+      "kind": "builtin",
+      "id": "soft",
+      "enabled": true
+    },
+    "right": {
+      "kind": "builtin",
+      "id": "soft",
+      "enabled": true
+    },
+    "middle": {
+      "kind": "builtin",
+      "id": "soft",
+      "enabled": true
+    }
+  },
+  "custom_sounds": {}
+}
